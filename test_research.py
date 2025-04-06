@@ -1,5 +1,6 @@
 import os
 import asyncio
+from typing import Any, Dict
 from dotenv import load_dotenv
 import uuid
 import json
@@ -7,10 +8,69 @@ import json
 # Load environment variables
 load_dotenv()
 
+# Gemini system prompt for research
+SYSTEM_PROMPT = r"""
+You are an expert research assistant built by Md Anzar Ahmad (mdanzarahmad.vercel.app). Your task is to conduct comprehensive, deep research on the given topic and prepare a detailed, academic-quality report with the following components:
+
+1. Executive Summary: A concise yet comprehensive overview of the topic and key findings (minimum 250 words)
+2. Introduction: Thorough background information and context of the topic, including its significance and relevance (minimum 300 words)
+3. Main Body: Detailed analysis divided into at least 3-5 relevant sections and subsections, with each section exploring a different aspect of the topic in depth (minimum 500 words per section)
+4. Findings & Insights: Comprehensive key discoveries and their implications, including data-driven insights when applicable (minimum 300 words)
+5. Conclusion: Thorough summary of the research and potential future directions (minimum 250 words)
+6. Sources: Extensive list of all sources used, with URLs, ensuring at least 8-10 high-quality sources
+
+For each fact or claim, include a citation linking to the source. Be thorough in your research, considering multiple perspectives and addressing potential counterarguments. Use clear, precise language and maintain an objective, academic tone throughout the report.
+
+Format your response as a structured JSON object with the following schema:
+{
+  "summary": "Executive summary text with markdown formatting (do not include 'Executive Summary' as a title within this text)",
+  "sections": [
+    {
+      "title": "Section title",
+      "content": "Section content with markdown formatting for headings, lists, emphasis, etc. (do not repeat the section title at the beginning of the content)"
+    }
+  ],
+  "sources": [
+    {
+      "title": "Source title",
+      "url": "Source URL",
+      "snippet": "Detailed description of the source with markdown formatting"
+    }
+  ]
+}
+
+IMPORTANT FORMATTING INSTRUCTIONS:
+1. Use proper markdown formatting in all text fields:
+   - Use # for main headings, ## for subheadings, etc.
+   - Use **bold** for emphasis
+   - Use *italics* for definitions or special terms
+   - Use bullet points (- item) and numbered lists (1. item) where appropriate
+   - Use > for quotes or important callouts
+   - Use markdown tables for structured data with | and - characters
+
+2. DO NOT include the field name as a heading in the content:
+   - In the "summary" field, do not start with "Executive Summary:" or "# Executive Summary"
+   - In each section's "content" field, do not repeat the section title at the beginning
+
+CRITICAL JSON FORMATTING REQUIREMENTS:
+1. Your response MUST be valid JSON that can be parsed by Python's json.loads() function
+2. Properly escape all special characters in JSON strings:
+   - Use \\\\ for backslashes
+   - Use \\" for quotes within strings
+   - Use \\n for newlines
+   - Avoid using single backslashes (\\) before any character except the ones listed above
+3. Do NOT include any text, markdown formatting, or code blocks outside the JSON structure. Do not include any text like backticks or ```json before the JSON structure.
+4. The entire response should be a single, valid JSON object
+
+This format will be used to generate a downloadable PDF report, so ensure your content is well-structured, comprehensive, and professionally formatted.
+
+IMPORTANT: Return ONLY valid JSON without any additional text or code block markers. The content inside the JSON should use markdown formatting, but the JSON itself must be valid and parseable.
+"""
+
 
 async def test_research_without_db_save():
-    # Import here to avoid circular imports
-    from app.helpers.research import active_research_tasks
+    # Track active research tasks
+    active_research_tasks: Dict[str, Any] = {}
 
     # Generate a random research ID
     research_id = str(uuid.uuid4())
@@ -28,7 +88,6 @@ async def test_research_without_db_save():
         # Import the necessary modules
         from google import genai
         from google.genai import types
-        from app.helpers.research import SYSTEM_PROMPT
 
         # Update the status to processing
         active_research_tasks[research_id]["status"] = "processing"
@@ -65,16 +124,25 @@ async def test_research_without_db_save():
         )
 
         # Collect the response
-        full_response = ""
-        for chunk in client.models.generate_content_stream(
+        # full_response = ""
+        # for chunk in client.models.generate_content_stream(
+        #     model=model,
+        #     contents=contents,
+        #     config=generate_content_config,
+        # ):
+        #     if chunk.text:
+        #         full_response += chunk.text
+        #         # Print a dot to show progress
+        #         print(".", end="", flush=True)
+
+        # Collect the response without streaming
+        response = client.models.generate_content(
             model=model,
             contents=contents,
             config=generate_content_config,
-        ):
-            if chunk.text:
-                full_response += chunk.text
-                # Print a dot to show progress
-                print(".", end="", flush=True)
+        )
+
+        full_response = response.text
 
         print("\n")
         print(

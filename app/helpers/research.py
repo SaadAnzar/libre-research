@@ -162,7 +162,7 @@ def parse_json(text: str):
         return False, None
 
 
-async def conduct_research(
+def conduct_research(
     research_id: str, topic: str, additional_context: Optional[str], user_id: str
 ):
     """Background task to conduct research using Gemini API"""
@@ -200,15 +200,14 @@ async def conduct_research(
             response_mime_type="text/plain",
         )
 
-        # Collect the response
-        full_response = ""
-        for chunk in client.models.generate_content_stream(
+        # Collect the response without streaming
+        response = client.models.generate_content(
             model=model,
             contents=contents,
             config=generate_content_config,
-        ):
-            if chunk.text:
-                full_response += chunk.text
+        )
+
+        full_response = response.text
 
         print(
             f"Raw response preview: {full_response[:200]}..."
