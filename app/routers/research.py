@@ -230,7 +230,7 @@ async def get_research_pdf(
         # Return the file as a response
         return FileResponse(
             path=pdf_path,
-            filename=f"Libre_Research_{topic.replace(' ', '_')}.pdf",
+            filename=f"LibreResearch-{topic.replace(' ', '_')}.pdf",
             media_type="application/pdf",
             background=background_tasks,
         )
