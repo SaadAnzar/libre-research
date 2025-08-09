@@ -12,6 +12,7 @@ app = FastAPI(
     title="Libre Research",
     description="A platform for conducting deep research and generating comprehensive reports.",
     version="0.1.0",
+    redirect_slashes=False,
 )
 
 app.add_middleware(
