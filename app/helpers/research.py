@@ -6,6 +6,7 @@ from typing import Any, Dict, Optional
 from google import genai
 from google.genai import types
 
+from app.models.research import Report
 from app.utils.supabase_client import get_supabase_client
 
 
@@ -235,7 +236,7 @@ def conduct_research(
             }
 
         # Create a report object
-        report = {
+        report: Report = {
             "id": research_id,
             "user_id": user_id,
             "topic": topic,

@@ -23,6 +23,7 @@ class UserInDB(UserBase):
     id: str
     hashed_password: str
     created_at: datetime
+    deleted: bool
 
 
 class Token(BaseModel):

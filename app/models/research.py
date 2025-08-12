@@ -27,11 +27,14 @@ class ReportSection(BaseModel):
 
 class Report(BaseModel):
     id: str
+    user_id: str
     topic: str
     summary: str
     sections: List[ReportSection]
     sources: List[Source]
+    report_json: str
     created_at: datetime
+    deleted: Optional[bool] = False
 
 
 class ReportResponse(BaseModel):

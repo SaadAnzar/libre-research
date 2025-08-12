@@ -28,7 +28,13 @@ async def get_user_by_id(user_id: str, _=Depends(get_current_user)):
     """Get a user by ID (requires authentication)"""
     print("Fetching user profile for:", user_id)
 
-    response = supabase.table("users").select("*").eq("id", user_id).execute()
+    response = (
+        supabase.table("users")
+        .select("*")
+        .eq("id", user_id)
+        .eq("deleted", False)
+        .execute()
+    )
     user = response.data[0] if response.data else None
 
     if not user:

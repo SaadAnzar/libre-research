@@ -53,7 +53,13 @@ async def validate_token(token: str = Depends(oauth2_scheme)) -> dict:
                 detail="Could not validate credentials",
             )
 
-        response = supabase.table("users").select("*").eq("email", email).execute()
+        response = (
+            supabase.table("users")
+            .select("*")
+            .eq("email", email)
+            .eq("deleted", False)
+            .execute()
+        )
         user = response.data[0] if response.data else None
 
         if user is None:

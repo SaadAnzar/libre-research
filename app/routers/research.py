@@ -17,6 +17,7 @@ from app.helpers.research import (
 )
 from app.helpers.research import conduct_research
 from app.models.research import (
+    Report,
     ReportResponse,
     ResearchHistory,
     ResearchHistoryResponse,
@@ -71,6 +72,7 @@ async def get_research_history(current_user: dict = Depends(get_current_user)):
         supabase.table("research_reports")
         .select("id, user_id, topic, created_at")
         .eq("user_id", current_user["id"])
+        .eq("deleted", False)
         .order("created_at", desc=True)
         .execute()
     )
@@ -100,6 +102,7 @@ async def get_research_status(
             .select("*")
             .eq("id", research_id)
             .eq("user_id", current_user["id"])
+            .eq("deleted", False)
             .execute()
         )
 
@@ -142,6 +145,7 @@ async def get_research_report(
         .select("*")
         .eq("id", research_id)
         .eq("user_id", current_user["id"])
+        .eq("deleted", False)
         .execute()
     )
 
@@ -197,6 +201,7 @@ async def get_research_pdf(
             .select("*")
             .eq("id", research_id)
             .eq("user_id", current_user["id"])
+            .eq("deleted", False)
             .execute()
         )
 
@@ -247,4 +252,37 @@ async def get_research_pdf(
         print(error_detail)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error_detail
+        )
+
+
+@router.delete("/{research_id}")
+async def delete_research_report(
+    research_id: str, current_user: dict = Depends(get_current_user)
+):
+    try:
+        response = (
+            supabase.table("research_reports")
+            .select("*")
+            .eq("id", research_id)
+            .eq("user_id", current_user["id"])
+            .eq("deleted", False)
+            .execute()
+        )
+
+        if not response.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Research report not found",
+            )
+
+        # Delete the report
+        supabase.table("research_reports").update({"deleted": True}).eq(
+            "id", research_id
+        ).execute()
+
+        return {"message": "Research report deleted successfully"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete research report: {str(e)}",
         )
